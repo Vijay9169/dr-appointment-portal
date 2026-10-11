@@ -33,13 +33,13 @@ export default function Navbar({ clinicConfig = {}, onBookClick, onCrmClick }) {
         </nav>
 
         <div className="flex items-center gap-3">
-          <button
+          {/* <button
             type="button"
             onClick={onCrmClick}
             className="text-xs font-semibold text-[#133E2F] px-3.5 py-2 hover:opacity-80 transition"
           >
             Admin CRM
-          </button>
+          </button> */}
           <button
             onClick={onBookClick}
             className="bg-[#C35A38] text-white text-xs font-semibold px-5 py-2.5 rounded-xl hover:bg-[#AB4B2C] shadow-sm transition"

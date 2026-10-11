@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-    Clock, ArrowRight, Phone, MapPin, Mail, MessageCircle,
+    Clock, Stethoscope, ArrowRight, Phone, MapPin, Mail, MessageCircle,
     CheckCircle2
 } from 'lucide-react';
 
-export default function HeroSection({ clinicConfig = {}, onBookClick }) {
+export default function HeroSection({ clinicConfig = {}, onBookClick, onCrmClick }) {
     const [enquiry, setEnquiry] = useState({ name: '', phone: '', question: '' });
     const [enquirySent, setEnquirySent] = useState(false);
 
@@ -409,30 +409,80 @@ export default function HeroSection({ clinicConfig = {}, onBookClick }) {
                 </div>
             </section>
 
-            {/* 5. FOOTER */}
-            <footer className="bg-[#133E2F] text-white py-14 px-6 border-t border-white/10">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 text-xs">
-                    <div className="md:col-span-5 space-y-2">
-                        <h4 className="font-serif font-bold text-base text-[#E6C285]">{clinicName}</h4>
-                        <p className="text-[#A2B8A6] max-w-sm leading-relaxed">{tagline}</p>
+            {/* FOOTER SECTION */}
+            <footer className="bg-[#0D2B20] text-[#D8E2DC] pt-16 pb-8 border-t border-[#133E2F]">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10">
+
+                    {/* Col 1: Clinic Identity (Navbar jaisa same Stethoscope badge) */}
+                    <div className="md:col-span-2 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#133E2F] flex items-center justify-center text-amber-200 shadow-sm shrink-0">
+                                <Stethoscope className="w-5 h-5 text-[#E6C285]" />
+                            </div>
+                            <div>
+                                <h4 className="font-serif font-bold text-lg text-white">
+                                    {clinicConfig?.clinicName || "Mehta Child Care Clinic"}
+                                </h4>
+                                <p className="text-[10px] text-[#A7C2AF] uppercase tracking-wider">
+                                    {clinicConfig?.tagline || "Compassionate Pediatric Care & Child Wellness"}
+                                </p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-[#8FA796] max-w-sm leading-relaxed">
+                            Comprehensive pediatric consultations, gentle clinical assessments, vaccination schedules, and newborn care tracking.
+                        </p>
                     </div>
-                    <div className="md:col-span-3 space-y-2">
-                        <p className="font-semibold text-white uppercase tracking-wider">Explore</p>
-                        <ul className="space-y-1.5 text-[#B6C9BA]">
-                            <li><button onClick={onBookClick} className="hover:text-white">Book an appointment</button></li>
-                            <li><a href="#about" className="hover:text-white">About {doctorName}</a></li>
-                            <li><a href="#treatments" className="hover:text-white">Treatments</a></li>
-                            <li><a href="#visit" className="hover:text-white">Visit us</a></li>
+
+                    {/* Col 2: EXPLORE */}
+                    <div className="space-y-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#E6C285]">
+                            Explore
+                        </p>
+                        <ul className="space-y-2 text-xs text-[#A7C2AF]">
+                            <li>
+                                <button onClick={onBookClick} className="hover:text-white transition">
+                                    Book an appointment
+                                </button>
+                            </li>
+                            <li>
+                                <a href="#about" className="hover:text-white transition">
+                                    About {clinicConfig?.doctorName ? `Dr. ${clinicConfig.doctorName.replace(/^Dr\.\s*/i, '')}` : 'Doctor'}
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#treatments" className="hover:text-white transition">
+                                    Treatments
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#visit" className="hover:text-white transition">
+                                    Visit us
+                                </a>
+                            </li>
+                            <li>
+                                <button onClick={onCrmClick} className="hover:text-white transition">
+                                    Clinic CRM (admin)
+                                </button>
+                            </li>
                         </ul>
                     </div>
-                    <div className="md:col-span-4 space-y-2">
-                        <p className="font-semibold text-white uppercase tracking-wider">Contact</p>
-                        <div className="space-y-1 text-[#B6C9BA]">
-                            <p>{address}</p>
-                            <p>{phone}</p>
-                            <p>{email}</p>
-                        </div>
+
+                    {/* Col 3: CONTACT */}
+                    <div className="space-y-3 text-xs text-[#A7C2AF]">
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#E6C285]">
+                            Contact
+                        </p>
+                        <p>{clinicConfig?.address || "104, Blossom Healthcare Plaza, MG Road, Pune 411001"}</p>
+                        <p>{clinicConfig?.phone || "+91 98220 41234"}</p>
+                        <p>{clinicConfig?.email || "contact@mehtachildcare.co"}</p>
                     </div>
+                </div>
+
+                {/* BOTTOM COPYRIGHT STRIP (Only centered text, static tagline removed) */}
+                <div className="max-w-7xl mx-auto px-6 mt-12 pt-6 border-t border-[#133E2F]/60 text-center">
+                    <p className="text-xs text-[#6B8573]">
+                        © {new Date().getFullYear()} {clinicConfig?.clinicName || "Mehta Child Care Clinic"}. All rights reserved.
+                    </p>
                 </div>
             </footer>
         </>

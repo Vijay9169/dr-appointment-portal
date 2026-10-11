@@ -88,6 +88,7 @@ export default function App() {
       <HeroSection
         clinicConfig={clinicConfig}
         onBookClick={() => setView('booking')}
+        onCrmClick={() => setShowLoginModal(true)}
       />
 
       {/* Admin Login PIN Modal */}

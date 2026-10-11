@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import {
     LayoutDashboard, CalendarDays, Users, BellRing, HelpCircle,
-    BarChart3, Settings, ExternalLink, Plus, Check, CheckCircle2,
-    Trash2, MessageCircle, Save
+    BarChart3, Settings, ExternalLink, Plus, Check, X, CheckCircle2,
+    Trash2, MessageCircle, Save, XCircle
 } from 'lucide-react';
 import { updateAppointmentStatus } from '../api/appointmentApi';
 import PatientDirectory from './PatientDirectory';
@@ -22,6 +23,9 @@ export default function AdminDashboard({
     // Local copy of form inputs
     const [formData, setFormData] = useState(clinicConfig);
 
+    // Toast Notification State
+    const [toast, setToast] = useState(null);
+
     const handleStatus = async (id, status) => {
         await updateAppointmentStatus(id, status);
         if (onRefresh) onRefresh();
@@ -30,9 +34,10 @@ export default function AdminDashboard({
     const handleDeleteEnquiry = async (id) => {
         try {
             await fetch(`http://localhost:5000/api/enquiries/${id}`, { method: 'DELETE' });
+            showToast('Enquiry deleted successfully.', 'success');
             if (onRefresh) onRefresh();
         } catch (e) {
-            alert('Delete failed');
+            showToast('Delete failed. Please try again.', 'error');
         }
     };
 
@@ -49,14 +54,14 @@ export default function AdminDashboard({
             if (res.ok) {
                 const data = await res.json();
                 setClinicConfig(data);
-                alert('🎉 Clinic settings successfully saved to Database! Public site updated.');
+                showToast('Clinic settings successfully saved! Public site updated.', 'success');
             } else {
                 setClinicConfig(formData);
-                alert('Settings saved locally.');
+                showToast('Settings saved locally.', 'success');
             }
         } catch (err) {
             setClinicConfig(formData);
-            alert('Saved in state (offline mode).');
+            showToast('Settings saved in offline mode.', 'success');
         }
         setSaveLoading(false);
     };
@@ -66,8 +71,95 @@ export default function AdminDashboard({
     const totalRevenue = confirmedCount * (Number(clinicConfig?.fee) || 600);
     const uniquePatientsCount = new Set(appointments.map((a) => a.phone)).size;
 
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => {
+            setToast(null);
+        }, 3500);
+    };
+
+    // Status update with toast trigger
+    const handleAppointmentStatusChange = async (appointmentId, newStatus, patientName) => {
+        try {
+            // Aapka existing update API call
+            await updateAppointmentStatus(appointmentId, newStatus);
+
+            if (newStatus === 'Confirmed') {
+                showToast(`Appointment for ${patientName || 'patient'} confirmed successfully!`, 'success');
+            } else if (newStatus === 'Cancelled') {
+                showToast(`Appointment for ${patientName || 'patient'} cancelled.`, 'error');
+            }
+
+            if (onRefresh) onRefresh();
+        } catch (err) {
+            showToast('Failed to update status. Please try again.', 'error');
+        }
+    };
+
+    // Helper function to check if appointment date & time has passed
+    const isSlotPassed = (dateStr, timeStr) => {
+        try {
+            if (!dateStr) return false;
+            // Combine date and time (handles formats like "2026-10-11 10:30 AM" or "Mon, 12 Oct 2026 12:00 PM")
+            const combinedStr = `${dateStr} ${timeStr || ''}`.trim();
+            const slotDate = new Date(combinedStr);
+
+            // Agar valid date parse hui toh compare karein
+            if (!isNaN(slotDate.getTime())) {
+                return new Date() > slotDate;
+            }
+            return false;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    // SweetAlert2 Confirmation for Cancel Action
+    const confirmCancelAppointment = (appointment) => {
+        Swal.fire({
+            title: 'Cancel Appointment?',
+            text: `Are you sure you want to cancel the appointment for ${appointment.patientName || 'this patient'}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#C35A38',
+            cancelButtonColor: '#133E2F',
+            confirmButtonText: 'Yes, Cancel it',
+            cancelButtonText: 'Keep it',
+            background: '#FAF7F0',
+            customClass: {
+                popup: 'rounded-2xl border border-[#E8DFC8]'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleAppointmentStatusChange(appointment._id, 'Cancelled', appointment.patientName);
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen bg-[#FAF7F0] flex text-[#1E2B22]">
+
+            {/* Top Right Toast Notification */}
+            {toast && (
+                <div className="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border bg-white animate-in slide-in-from-top duration-200">
+                    {toast.type === 'success' ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    ) : (
+                        <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                    )}
+
+                    <div className="text-xs font-semibold text-[#133E2F]">
+                        {toast.message}
+                    </div>
+
+                    <button
+                        onClick={() => setToast(null)}
+                        className="text-stone-400 hover:text-stone-600 p-0.5 rounded-full"
+                    >
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
             {/* SIDEBAR */}
             <aside className="w-60 bg-[#0E2A20] text-white p-5 flex flex-col justify-between shrink-0 min-h-screen">
                 <div className="space-y-6">
@@ -163,34 +255,90 @@ export default function AdminDashboard({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#F0EAE1]">
-                                        {appointments.map((item) => (
-                                            <tr key={item._id} className="hover:bg-[#FAF7F0]">
-                                                <td className="py-2.5 px-3 font-mono font-bold text-[#133E2F]">{item.refId}</td>
+                                        {appointments.map((appointment) => (
+                                            <tr key={appointment._id} className="hover:bg-[#FAF7F0]">
+                                                <td className="py-2.5 px-3 font-mono font-bold text-[#133E2F]">{appointment.refId}</td>
                                                 <td className="py-2.5 px-3">
-                                                    <p className="font-semibold">{item.patientName}</p>
-                                                    <p className="text-[10px] text-[#8C9C8F]">{item.phone}</p>
+                                                    <p className="font-semibold">{appointment.patientName}</p>
+                                                    <p className="text-[10px] text-[#8C9C8F]">{appointment.phone}</p>
                                                 </td>
                                                 <td className="py-2.5 px-3">
-                                                    <p>{item.date}</p>
-                                                    <p className="text-[10px] text-[#8C9C8F]">{item.time}</p>
+                                                    <p>{appointment.date}</p>
+                                                    <p className="text-[10px] text-[#8C9C8F]">{appointment.time}</p>
                                                 </td>
                                                 <td className="py-2.5 px-3">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${appointment.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                                                        appointment.status === 'Completed' ? 'bg-teal-100 text-teal-800' :
+                                                            appointment.status === 'Cancelled' ? 'bg-gray-100 text-gray-600' :
+                                                                'bg-amber-100 text-amber-800'
                                                         }`}>
-                                                        {item.status}
+                                                        {appointment.status}
                                                     </span>
                                                 </td>
-                                                <td className="py-2.5 px-3 text-center">
-                                                    {item.status !== 'Confirmed' ? (
-                                                        <button
-                                                            onClick={() => handleStatus(item._id, 'Confirmed')}
-                                                            className="p-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                                            title="Confirm"
-                                                        >
-                                                            <Check className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    ) : (
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" />
+                                                <td className="py-3 px-4 text-center">
+                                                    {/* STATE 1: PENDING */}
+                                                    {appointment.status === 'Pending' && (
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => handleAppointmentStatusChange(appointment._id, 'Confirmed', appointment.patientName)}
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition"
+                                                                title="Confirm Slot"
+                                                            >
+                                                                <Check className="w-3.5 h-3.5" />
+                                                                <span>Confirm</span>
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => confirmCancelAppointment(appointment)}
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition"
+                                                                title="Cancel Appointment"
+                                                            >
+                                                                <X className="w-3.5 h-3.5" />
+                                                                <span>Cancel</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* STATE 2: CONFIRMED */}
+                                                    {appointment.status === 'Confirmed' && (
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            {/* 1st Button: Completed */}
+                                                            <button
+                                                                onClick={() => handleAppointmentStatusChange(appointment._id, 'Completed', appointment.patientName)}
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-xs transition"
+                                                                title="Mark consultation completed"
+                                                            >
+                                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                                                <span>Completed</span>
+                                                            </button>
+
+                                                            {/* 2nd Button: Cancel (Sirf time se pehle dikhega, slot nikal jane par auto-hide) */}
+                                                            {!isSlotPassed(appointment.date, appointment.time) ? (
+                                                                <button
+                                                                    onClick={() => confirmCancelAppointment(appointment)}
+                                                                    className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 rounded-lg transition"
+                                                                    title="Cancel this appointment"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                                                    Slot Passed
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* STATE 3: COMPLETED */}
+                                                    {appointment.status === 'Completed' && (
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                                            <CheckCircle2 className="w-3.5 h-3.5" /> Consulted
+                                                        </span>
+                                                    )}
+
+                                                    {/* STATE 4: CANCELLED */}
+                                                    {appointment.status === 'Cancelled' && (
+                                                        <span className="text-xs text-stone-400 italic">Cancelled</span>
                                                     )}
                                                 </td>
                                             </tr>

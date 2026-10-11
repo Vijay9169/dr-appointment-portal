@@ -62,8 +62,7 @@ export default function BookingWizard({ clinicConfig = {}, onBack, onComplete })
   const handleFinish = async () => {
     try {
       await createAppointment({ ...form, fee: fee });
-      setSubmitted(true);
-      if (onComplete) onComplete();
+      setSubmitted(true); // Sirf success state set karein, redirect mat karein
     } catch (e) {
       alert('Error booking appointment');
     }
@@ -100,10 +99,10 @@ export default function BookingWizard({ clinicConfig = {}, onBack, onComplete })
             <div key={lbl} className="flex items-center gap-2">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step > idx + 1
-                    ? 'bg-[#133E2F] text-white'
-                    : step === idx + 1
-                      ? 'border border-[#C35A38] text-[#C35A38]'
-                      : 'border border-[#D1C7B2] text-[#8C7D6B]'
+                  ? 'bg-[#133E2F] text-white'
+                  : step === idx + 1
+                    ? 'border border-[#C35A38] text-[#C35A38]'
+                    : 'border border-[#D1C7B2] text-[#8C7D6B]'
                   }`}
               >
                 {step > idx + 1 ? '✓' : idx + 1}
@@ -167,10 +166,10 @@ export default function BookingWizard({ clinicConfig = {}, onBack, onComplete })
                       disabled={item.closed}
                       onClick={() => setForm({ ...form, date: item.full })}
                       className={`p-3.5 rounded-2xl border text-center transition-all duration-150 flex flex-col items-center justify-center ${item.closed
-                          ? 'opacity-40 bg-[#F4EFEB] border-[#E8DFC8] cursor-not-allowed text-[#8C7D6B]'
-                          : isSelected
-                            ? 'bg-[#133E2F] text-white border-[#133E2F] shadow-md scale-[1.03] ring-2 ring-[#133E2F]/30'
-                            : 'bg-[#FAF7F0] border-[#E8DFC8] text-[#1E2B22] hover:border-[#133E2F] hover:bg-white'
+                        ? 'opacity-40 bg-[#F4EFEB] border-[#E8DFC8] cursor-not-allowed text-[#8C7D6B]'
+                        : isSelected
+                          ? 'bg-[#133E2F] text-white border-[#133E2F] shadow-md scale-[1.03] ring-2 ring-[#133E2F]/30'
+                          : 'bg-[#FAF7F0] border-[#E8DFC8] text-[#1E2B22] hover:border-[#133E2F] hover:bg-white'
                         }`}
                     >
                       <span className={`text-[11px] font-bold tracking-wider ${isSelected ? 'text-[#E6C285]' : 'text-[#8A796A]'}`}>
@@ -313,8 +312,8 @@ export default function BookingWizard({ clinicConfig = {}, onBack, onComplete })
                       type="button"
                       onClick={() => setForm({ ...form, patientType: pt })}
                       className={`p-3 rounded-xl border text-left text-xs ${form.patientType === pt
-                          ? 'bg-[#EBF2ED] border-[#133E2F] font-semibold text-[#133E2F]'
-                          : 'border-[#DCD5C4] text-[#6E7E70]'
+                        ? 'bg-[#EBF2ED] border-[#133E2F] font-semibold text-[#133E2F]'
+                        : 'border-[#DCD5C4] text-[#6E7E70]'
                         }`}
                     >
                       <p>{pt}</p>
@@ -362,7 +361,14 @@ export default function BookingWizard({ clinicConfig = {}, onBack, onComplete })
                   <p className="text-xs">
                     Your appointment with {doctorName} at {clinicName} is confirmed for {form.date} at {form.time}.
                   </p>
-                  <button onClick={onBack} className="mt-3 px-6 py-2 bg-[#133E2F] text-white text-xs font-semibold rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onComplete) onComplete();
+                      else if (onBack) onBack();
+                    }}
+                    className="mt-3 px-6 py-2.5 bg-[#133E2F] text-white text-xs font-semibold rounded-xl hover:bg-[#0B251C] transition cursor-pointer"
+                  >
                     Back to Clinic
                   </button>
                 </div>

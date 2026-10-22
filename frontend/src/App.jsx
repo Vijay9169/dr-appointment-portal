@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './api/appointmentApi';
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -17,7 +18,7 @@ export default function App() {
   const loadData = async () => {
     try {
       // 1. Fetch live settings from MongoDB
-      const resS = await fetch('http://localhost:5000/api/settings');
+      const resS = await fetch(`${API_BASE_URL}/api/settings`);
       if (resS.ok) {
         const conf = await resS.json();
         if (conf) {
@@ -31,7 +32,7 @@ export default function App() {
       setAppointments(resA || []);
 
       // 3. Fetch live enquiries from MongoDB
-      const resE = await fetch('http://localhost:5000/api/enquiries');
+      const resE = await fetch(`${API_BASE_URL}/api/enquiries`);
       if (resE.ok) {
         setEnquiries(await resE.json());
       }

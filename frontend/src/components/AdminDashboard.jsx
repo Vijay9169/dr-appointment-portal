@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api/appointmentApi';
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import {
@@ -33,7 +34,7 @@ export default function AdminDashboard({
 
     const handleDeleteEnquiry = async (id) => {
         try {
-            await fetch(`http://localhost:5000/api/enquiries/${id}`, { method: 'DELETE' });
+            await fetch(`${API_BASE_URL}/api/enquiries/${id}`, { method: 'DELETE' });
             showToast('Enquiry deleted successfully.', 'success');
             if (onRefresh) onRefresh();
         } catch (e) {
@@ -46,7 +47,7 @@ export default function AdminDashboard({
         e.preventDefault();
         setSaveLoading(true);
         try {
-            const res = await fetch('http://localhost:5000/api/settings', {
+            const res = await fetch(`${API_BASE_URL}/api/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

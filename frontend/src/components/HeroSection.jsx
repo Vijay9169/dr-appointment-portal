@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api/appointmentApi';
 import React, { useState } from 'react';
 import {
     Clock, Stethoscope, ArrowRight, Phone, MapPin, Mail, MessageCircle,
@@ -48,7 +49,7 @@ export default function HeroSection({ clinicConfig = {}, onBookClick, onCrmClick
     const handleEnquiry = async (e) => {
         e.preventDefault();
         try {
-            await fetch('http://localhost:5000/api/enquiries', {
+            await fetch(`${API_BASE_URL}/api/enquiries`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enquiry)
